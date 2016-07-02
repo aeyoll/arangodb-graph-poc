@@ -1,0 +1,44 @@
+var Graph = require("@arangodb/general-graph");
+
+db._drop('knows');
+db._drop('recommands');
+db._drop('persons');
+db._drop('doctors');
+
+Graph._drop('knows_graph');
+Graph._drop('recommands_graph');
+
+var k = Graph._create("knows_graph",
+    [Graph._relation("knows", "persons", "persons")]
+);
+
+var r = Graph._create("recommands_graph",
+    [Graph._relation("recommands", "persons", "doctors")]
+);
+
+var a = k.persons.save({name: "Alice", _key: "alice"})._id;
+var b = k.persons.save({name: "Bob", _key: "bob"})._id;
+var c = k.persons.save({name: "Charlie", _key: "charlie"})._id;
+var d = k.persons.save({name: "Dave", _key: "dave"})._id;
+var e = k.persons.save({name: "Eve", _key: "eve"})._id;
+
+var dda = r.doctors.save({name: "DAlice", _key: "dalice"})._id;
+var ddb = r.doctors.save({name: "DBob", _key: "dbob"})._id;
+var ddc = r.doctors.save({name: "DCharlie", _key: "dcharlie"})._id;
+var ddd = r.doctors.save({name: "DDave", _key: "ddave"})._id;
+var dde = r.doctors.save({name: "DEve", _key: "deve"})._id;
+
+k.knows.save(a, b, {});
+k.knows.save(b, c, {});
+k.knows.save(b, d, {});
+k.knows.save(e, a, {});
+k.knows.save(e, b, {});
+
+r.recommands.save(a, ddb, {});
+r.recommands.save(b, ddc, {});
+r.recommands.save(b, ddd, {});
+r.recommands.save(e, dda, {});
+r.recommands.save(e, ddb, {});
+
+db._query("FOR v, e, p IN 1..1 OUTBOUND 'persons/eve' GRAPH 'knows_graph' RETURN v")
+db._query("FOR v, e, p IN 1..1 OUTBOUND 'persons/eve' GRAPH 'recommands_graph' RETURN v")
